@@ -88,50 +88,9 @@ class MdlLoader(bpy.types.Operator, ImportHelper):
 
     def load(self):
         self.sb = start_bench("Load MDL")
-        b = start_bench("Read data")
-        self.data = MdlData(self.mdl_file, self.vvd_file, self.vtx_file, self.downscale)
-        if(not self.data.read()):
-            return False
-        end_bench(b)
-
-        self.collection = bpy.context.collection
-
-        r = self.build_mesh()
-
+        r = load_mdl(self.mdl_file, self.vvd_file, self.vtx_file, self.downscale)
         end_bench(self.sb)
-        return r
-    
-
-    def build_mesh(self):
-        bm = bmesh.new()
-        ob = create_obj(self.data.mdldata.name)
-        
-        for bodypart in self.data.vtxdata.bodyparts:
-            for model in bodypart:
-                for mesh in model[0]: # lod zero (model is the lod array (which needs to be fixed (just like all the other structures in this loop)))
-                    for stripgroup in mesh:
-                        for index in range(0, len(stripgroup.indices), 3):
-                            try:
-                                face = []
-
-                                for i in [0, 2, 1]:
-                                    vertex_index = stripgroup.vertices[stripgroup.indices[index + i]].original_vertex
-                                    face.append(bm.verts.new(self.data.vvddata.vertices[vertex_index].position))
-
-                                f = bm.faces.new(face)
-                                f.smooth = True
-                            except Exception as e:
-                                print(e)
-                                pass
-
-        if(self.downscale):
-            ob.scale *= HU_SCALE_FACTOR
-
-        bm.to_mesh(ob.data)
-        bm.free()
-        self.collection.objects.link(ob)
-
-        return True
+        return r != None
 
 
 def menu_import(self, context):
