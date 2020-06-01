@@ -28,8 +28,6 @@ def load_mdl(mdl: BinaryReader, vvd: BinaryReader, vtx: BinaryReader, downscale)
 
     bm = bmesh.new()
     ob = create_obj(data.mdldata.name)
-    # for v in data.vvddata.vertices:
-    #     bm.verts.new(v.position)
     
     for bodypart in data.vtxdata.bodyparts:
         for model in bodypart:
@@ -42,7 +40,9 @@ def load_mdl(mdl: BinaryReader, vvd: BinaryReader, vtx: BinaryReader, downscale)
 
                             for i in [0, 2, 1]:
                                 vertex_index = stripgroup.vertices[stripgroup.indices[index + i]].original_vertex
-                                face.append(bm.verts.new(data.vvddata.vertices[vertex_index].position))
+                                vert = bm.verts.new(data.vvddata.vertices[vertex_index].position)
+                                vert.normal = data.vvddata.vertices[vertex_index].normal
+                                face.append(vert)
                                 face_uv.append(data.vvddata.vertices[vertex_index].texcoord)
 
                             f = bm.faces.new(face)
@@ -69,8 +69,6 @@ def load_mdl(mdl: BinaryReader, vvd: BinaryReader, vtx: BinaryReader, downscale)
     
     if(downscale):
         ob.scale *= HU_SCALE_FACTOR
-
-    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.001)
 
     bm.to_mesh(ob.data)
     bm.free()
