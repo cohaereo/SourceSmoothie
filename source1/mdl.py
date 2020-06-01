@@ -38,13 +38,31 @@ def load_mdl(mdl: BinaryReader, vvd: BinaryReader, vtx: BinaryReader, downscale)
                     for index in range(0, len(stripgroup.indices), 3):
                         try:
                             face = []
+                            face_uv = []
 
                             for i in [0, 2, 1]:
                                 vertex_index = stripgroup.vertices[stripgroup.indices[index + i]].original_vertex
                                 face.append(bm.verts.new(data.vvddata.vertices[vertex_index].position))
+                                face_uv.append(data.vvddata.vertices[vertex_index].texcoord)
 
                             f = bm.faces.new(face)
                             f.smooth = True
+
+                            if(f != 0):
+                                uv_layer = bm.loops.layers.uv.verify()
+                                bm.faces.ensure_lookup_table()
+
+                                face = bm.faces[-1]
+                                for li, loopElement in enumerate(face.loops):
+                                    luvLayer = loopElement[uv_layer]
+                                    vertex = loopElement.vert.co
+
+                                    try:
+                                        uv = face_uv[li]
+                                        luvLayer.uv[0] =  uv[0]
+                                        luvLayer.uv[1] = -uv[1] + 1.0
+                                    except Exception as e:
+                                        pass
                         except Exception as e:
                             print(e)
                             pass
